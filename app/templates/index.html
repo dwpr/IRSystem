@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include "head.html" %}
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="h1 text-center text-danger text-capitalize">Information Retrieval</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="olah">
+                            <div class="form-group mt-2">
+                                <input type="text" class="form-control" id="query" name="query" placeholder="Enter Query">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- All Jquery -->
+    {% include "script.html" %}
+</body>
+
+</html>

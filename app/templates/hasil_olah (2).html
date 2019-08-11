@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include "head.html" %}
+    <!-- chart js -->
+    <!-- <script src="static/js/lib/chart-js/chart.bundle.js"></script> -->
+    <script src="../static/js/lib/echart/echart4/echarts.min.js"></script>
+    <script src="../static/js/lib/plotly/plotly.min.js"></script>
+    <script src="../static/js/lib/zingchart/zingchart.min.js"></script>
+</head>
+
+<body class="fix-header fix-sidebar">
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- <div class="preloader">
+        <svg class="circular" viewBox="25 25 50 50">
+			<circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" /> </svg>
+    </div> -->
+    <!-- Main wrapper  -->
+    <div id="main-wrapper">
+        <!-- header header  -->
+        {% include "navbar.html" %}
+        <!-- End header header -->
+        <!-- Left Sidebar  -->
+        {% include "sidebar.html" %}
+        <!-- End Left Sidebar  -->
+        <!-- Page wrapper  -->
+        <div class="page-wrapper">
+            <!-- Bread crumb -->
+            <div class="row page-titles">
+                <div class="col-md-5 align-self-center">
+                    <h3 class="text-primary">Hasil</h3> 
+                </div>
+                <!-- <div class="col-md-7 align-self-center">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="javascript:void(0)">Data</a></li>
+                        <li class="breadcrumb-item active">Rekap Hasil Prediksi</li>
+                    </ol>
+                </div> -->
+            </div>
+            <!-- End Bread crumb -->
+            <!-- Container fluid  -->
+            <div class="container-fluid">
+                <!-- Start Page Content -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="row">
+                                    {% if stat=='kosong' %}
+                                    <div class="col-md-12">
+                                        <div class="info info-warning">
+                                            data olah tidak ada, silahkan olah terlebih dahulu dengan upload data
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-md-12">
+                                        <div>
+                                            <div class="input-group">  
+                                                <label>
+                                                    <span class="btn">Pilih Hasil Olah</span>
+                                                </label>  
+                                                <select class="form-control rounded-0 col-md-2"  name="semester" id="search_hasil_olah">
+                                                    {% for i in range(n) %}
+                                                    <option value="{{ tab[i] }}">{% print tab[i] %}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <!-- <div id="tesload">                                            
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hovered table-sm" id="tabletesload">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>Kode Mata Kuliah</th>
+                                                            <th>Kode Pengampu</th>
+                                                            <th>Nilai AB</th>
+                                                            <th>Nilai CDE</th>
+                                                            <th>Nilai Angket</th>
+                                                            <th>Sentimen Positif</th>
+                                                            <th>Sentimen Netral</th>
+                                                            <th>Sentimen Negatif</th>
+                                                            <th>Skor</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                </table>
+                                            </div>
+                                        </div> -->
+                                        <div>
+                                            {% for i in range(n) %}
+                                            <div id="{{tab[i]}}" class="val-content">
+                                                <ul class="nav nav-tabs " role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active show" data-toggle="tab" href="#Tabel{{i}}" role="tab">
+                                                            <span class="hidden-sm-up">Tabel</span>
+                                                            <span class="hidden-xs-down">Tabel</span> 
+                                                        </a> 
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" data-toggle="tab" href="#Grafik{{i}}" role="tab">
+                                                            <span class="hidden-sm-up">Grafik</span>
+                                                            <span class="hidden-xs-down">Grafik</span> 
+                                                        </a> 
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" data-toggle="tab" href="#Wcloud{{i}}" role="tab">
+                                                            <span class="hidden-sm-up">Word Cloud</span>
+                                                            <span class="hidden-xs-down">Word Cloud</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" data-toggle="tab" href="#Konklusi{{i}}" role="tab">
+                                                            <span class="hidden-sm-up">Konklusi</span>
+                                                            <span class="hidden-xs-down">Konklusi</span> 
+                                                        </a> 
+                                                    </li>
+                                                </ul>
+                                                <!-- Tab panes -->
+                                                <div class="tab-content">
+                                                    <div class="tab-pane active show" id="Tabel{{i}}" role="tabpanel">
+                                                        <div class="table-responsive pt-3 pb-3">
+                                                            <h4 class="text-capitalize text-center">Tabel Hasil Olah {{tab[i]}}</h4>
+                                                            {{dftab[i].to_html(classes='table table-bordered table-hovered table-sm tabel_hasil')|safe}}
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane" id="Grafik{{i}}" role="tabpanel">
+                                                        <div class="row justify-content-center">
+                                                            <div class="col-md-6">
+                                                                <div class="text-capitalize text-center"><b>10 Skor Tertinggi dan Terendah</b></div>
+                                                                <div class="mw-100 mh-100" style="width:500px; height:400px;" id="echartbar{{i}}"></div>
+                                                                <script>                                                                    
+                                                                    // based on prepared DOM, initialize echarts instance
+                                                                    var myChart = echarts.init(document.getElementById('echartbar{{i}}'));
+                                                                    var label = {{ kriteria | tojson | safe}};
+                                                                    var echart_data = {{ echartbar_data[i] | tojson | safe}};
+                                                                    var xAxisData = {{ kode_pengampu[i] | tojson | safe}};
+
+                                                                    option = {
+                                                                        tooltip: {
+                                                                            trigger: 'axis',
+                                                                            axisPointer: {      
+                                                                                type: 'line'        // 'line' | 'shadow'
+                                                                            }
+                                                                        },
+                                                                        toolbox: {
+                                                                            show: true,
+                                                                            orient:'vertical',
+                                                                            feature: {
+                                                                                magicType: { show: true, type: ['line', 'bar'] ,title:{line:"line chart",bar:"bar chart"}},
+                                                                                restore: { show: true, title:"restore to original"},
+                                                                                saveAsImage: { show: true , title:"download as image"}
+                                                                            }
+                                                                        },
+                                                                        legend: {
+                                                                            data: label,
+                                                                            type: 'scroll',
+                                                                            top: 'top'
+                                                                        },
+                                                                        yAxis: {
+                                                                            type: 'value',
+                                                                            name: "Skor"
+                                                                        },
+                                                                        xAxis: {
+                                                                            type: 'category',
+                                                                            name:"Kode Matkul, Pengampu",
+                                                                            data: xAxisData,
+                                                                            boundaryGap:true,
+                                                                            nameRotate:90, 
+                                                                            axisLabel: {
+                                                                                rotate: 90, 
+                                                                                interval:0 //muncul semua, jika dihilangkan interval auto
+                                                                            },
+                                                                            axisTick:{
+                                                                                alignWithLabel:true,
+                                                                                interval: 0 //muncul semua, jika dihilangkan interval auto
+                                                                            }
+                                                                        },
+                                                                        series: echart_data
+                                                                    };
+                                                                    
+                                                                    var mediaQuery = [
+                                                                        {
+                                                                            option: {
+                                                                                series: [
+                                                                                    {
+                                                                                        radius: ['50%', '70%'],
+                                                                                        center: ['35%', '50%']
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            query: {
+                                                                                minAspectRatio: 1
+                                                                            },
+                                                                            option: {
+                                                                                series: [
+                                                                                    {
+                                                                                        radius: ['50%', '70%'],
+                                                                                        center: ['35%', '50%']
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            query: {
+                                                                                maxAspectRatio: 1
+                                                                            },
+                                                                            option: {
+                                                                                series: [
+                                                                                    {
+                                                                                        radius: ['50%', '70%'],
+                                                                                        center: ['50%', '35%']
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            query: {
+                                                                                maxWidth: 400
+                                                                            },
+                                                                            option: {
+                                                                                series: [
+                                                                                    {
+                                                                                        radius: ['50%', '70%'],
+                                                                                        center: ['50%', '35%']
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        }
+                                                                    ];
+
+                                                                    myChart.setOption({
+                                                                        baseOption: option,
+                                                                        media: mediaQuery
+                                                                    });
+
+                                                                    //for testing only
+                                                                    window.onresize = function () {
+                                                                            myChart.resize();
+                                                                    };
+                                                                    // use configuration item and data specified to show chart
+                                                                    // myChart.setOption(option);
+                                                                </script>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="col-md-6">
+                                                                    <div class="text-capitalize text-center">
+                                                                        <div>
+                                                                            <b>Status</b>
+                                                                        </div>
+                                                                        <div class="mw-100 mh-100" style="width:400px; height:400px;" id="echart{{i}}"></div>
+                                                                        <script type="text/javascript">
+                                                                            // based on prepared DOM, initialize echarts instance
+                                                                            var myChart = echarts.init(document.getElementById('echart{{i}}'));
+                                                                            var label = {{ label[i] | tojson | safe}};
+                                                                            var echart_data = {{ data_echart[i] | tojson | safe}}
+
+                                                                            // specify chart configuration item and data
+                                                                            option = {
+                                                                                tooltip: {
+                                                                                    trigger: 'item',
+                                                                                    formatter: "{b} : {c} ({d}%)"
+                                                                                },
+                                                                                toolbox: {
+                                                                                    show: true,
+                                                                                    orient: 'vertical',
+                                                                                    feature: {
+                                                                                        restore: { show: true, title: "restore to original" },
+                                                                                        saveAsImage: { show: true, title: "download as image" }
+                                                                                    }
+                                                                                },
+                                                                                legend: {
+                                                                                    type: 'scroll',
+                                                                                    orient: 'horizontal',
+                                                                                    top: 'top',
+                                                                                    data: label,
+                                                                                    selected: label
+                                                                                },
+                                                                                series: [
+                                                                                    {
+                                                                                        name: 'data',
+                                                                                        type: 'pie',
+                                                                                        radius: '60%',
+                                                                                        // center: ['40%', '50%'],
+                                                                                        data: echart_data,
+                                                                                        itemStyle: {
+                                                                                            emphasis: {
+                                                                                                shadowBlur: 10,
+                                                                                                shadowOffsetX: 0,
+                                                                                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                ]
+                                                                            };
+                                                                            // use configuration item and data specified to show chart
+                                                                            myChart.setOption(option);
+                                                                            
+                                                                            //for testing only
+                                                                            // window.onresize = function () {
+                                                                            //     myChart.resize();
+                                                                            // };                                                                            
+
+                                                                            $(window).on('resize', function () {
+                                                                                if (myChart != null && MyChart != undefined) {
+                                                                                    MyChart.resize();
+                                                                                }
+                                                                            });
+                                                                        </script>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mt-3 justify-content-center">
+                                                            <div class="col-md-8">
+                                                                <div id="plotly2d{{i}}" class="text-center">
+                                                                </div>
+                                                                <script>
+                                                                    var data = {{ plotly_scatter[i] | tojson | safe}};
+                                                                    var fill = {{ fill_scatter[i] | tojson | safe}};
+
+                                                                    var layout = {
+                                                                        // yaxis: {
+                                                                            // title: "Skor"
+                                                                        // },      
+                                                                        // grid: { rows: 2, columns: 2, pattern: 'independent' },
+                                                                        title: '<b>Cluster {{tab[i]}}</b>',
+                                                                        shapes : fill,
+                                                                    };
+
+                                                                    Plotly.newPlot('plotly2d{{i}}', data, layout, { responsive: true });
+                                                                </script>
+                                                            </div>
+                                                            <!-- <div class="col-md-4">
+                                                                <div class="table-responsive pt-3 pb-3">
+                                                                    <h6 class="text-capitalize text-center">Centroid Cluster</h6>
+                                                                    {{centroid[i].to_html(classes='table table-bordered table-hovered table-sm tabel_hasil')|safe}}
+                                                                </div>
+                                                            </div> -->
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane" id="Konklusi{{i}}" role="tabpanel">
+                                                        <div class="row mt-3">
+                                                            <div class="col-md-6">
+                                                                <div class="card p-0">
+                                                                    <div class="card-header bg-primary">
+                                                                        <div class="text-center text-uppercase text-white">5 Dosen tertinggi</div>
+                                                                    </div>
+                                                                    <div class="card-body border">
+                                                                        {% for dict_item in tertinggi[i] %}
+                                                                            <div class="media border p-2">
+                                                                                {% if dict_item.picture=='' %}
+                                                                                <div class="w-25 h-25">
+                                                                                    <div class="m-2 justify-content-center">
+                                                                                        <img class="img rounded-circle img-fluid" data-src="../static/images/dosen/noimage.png" alt="">
+                                                                                    </div>
+                                                                                </div>
+                                                                                {% else %}
+                                                                                <div class="w-25 h-25">
+                                                                                    <div class="m-2 justify-content-center">
+                                                                                        <img class="img rounded-circle img-fluid" data-src="../static/images/dosen/{{dict_item.picture}}" alt="">
+                                                                                    </div>
+                                                                                </div>
+                                                                                {% endif %}
+                                                                                <div class="media-body">
+                                                                                    <h5 class="mt-0">{{dict_item.nama}}</h5>
+                                                                                    <h6>Kode Pengampu : {{dict_item.kode_pengampu}}</h6>
+                                                                                    <h6>Skor : {{dict_item.skor}}</h6>
+                                                                                    <h6>Rerata : {{dict_item.rerata}}</h6>
+                                                                                    <!-- {% for key, value in dict_item.items() %}
+                                                                                        <h6>{{key}} :  {{value}}</h6>
+                                                                                    {% endfor %} -->
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="m-2">
+                                                                            </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">                                                            
+                                                                <div class="card p-0">
+                                                                    <div class="card-header bg-danger">
+                                                                        <div class="text-center text-uppercase text-white">5 Dosen terendah</div>
+                                                                    </div>
+                                                                    <div class="card-body border">
+                                                                        {% for dict_item in terendah[i] %}
+                                                                        <div class="media border p-2">
+                                                                            {% if dict_item.picture=='' %}
+                                                                            <div class="w-25 h-25">
+                                                                                <div class="m-2 justify-content-center">
+                                                                                    <img class="img rounded-circle img-fluid" data-src="../static/images/dosen/noimage.png" alt="">
+                                                                                </div>
+                                                                            </div>
+                                                                            {% else %}
+                                                                            <div class="w-25 h-25">
+                                                                                <div class="m-2 justify-content-center">
+                                                                                    <img class="img rounded-circle img-fluid" data-src="../static/images/dosen/{{dict_item.picture}}" alt="">
+                                                                                </div>
+                                                                            </div>
+                                                                            {% endif %}
+                                                                            <div class="media-body">
+                                                                                <h5 class="mt-0">{{dict_item.nama}}</h5>
+                                                                                <h6>Kode Pengampu : {{dict_item.kode_pengampu}}</h6>
+                                                                                <h6>Skor : {{dict_item.skor}}</h6>
+                                                                                <h6>Rerata : {{dict_item.rerata}}</h6>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="m-2">
+                                                                        </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane" id="Wcloud{{i}}" role="tabpanel">
+                                                        <div class="row justify-content-center">
+                                                            <div class="col-md-12">
+                                                                <div id="wordcloud_{{tab[i]}}" class="word_cloud">
+                                                                </div>
+                                                                <script>
+                                                                    // script all
+                                                                    var teks = {{teks[i] | tojson | safe}};
+                                                                    var ignore_teks = {{ ignore_teks[i] | tojson | safe}};
+                                                                    var myConfig = {
+                                                                        type: 'wordcloud',
+                                                                        options: {
+                                                                            text: teks, 
+                                                                            ignore : ignore_teks,                                                                              
+                                                                            style: {
+                                                                                hoverState: {
+                                                                                    alpha: 1,
+                                                                                    borderColor: 'black',
+                                                                                    textAlpha: 1,
+                                                                                },
+                                                                                tooltip: {
+                                                                                    text: '%text: %hits',
+                                                                                    visible: true,
+                                                                                    alpha: 0.9,
+                                                                                    backgroundColor: 'purple',
+                                                                                    borderColor: 'none',
+                                                                                    borderRadius: 2,
+                                                                                    fontColor: 'white',
+                                                                                    fontSize: 12,
+                                                                                    textAlpha: 1,
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    };
+
+                                                                    zingchart.render({
+                                                                        id: 'wordcloud_{{tab[i]}}',
+                                                                        data: myConfig,
+                                                                        height: 400,
+                                                                        width: '100%'
+                                                                    });
+                                                                </script>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <!-- End PAge Content -->
+            </div>
+            <!-- End Container fluid  -->
+            <!-- footer -->
+            {% include "footer.html" %}
+            <!-- End footer -->
+        </div>
+        <!-- End Page wrapper  -->
+    </div>
+    <!-- End Wrapper -->
+    <!-- All Jquery -->
+    {% include "script.html" %}
+    <script src="../static/js/lib/datatables/datatables.min.js"></script>
+    <!-- for testing echart responsive on load -->
+    <script>
+        // new LazyLoad();
+        var myLazyLoad = new LazyLoad({
+            elements_selector: "img"
+        });
+        
+        
+        function loadtabel(params) {
+                $.fn.dataTable.ext.errMode = 'none'; //disable error message, use throw or alert (default) to see the error
+                var t = $('#tabletesload').DataTable({                                      
+                    destroy: true, //destroy every new load cause reinitializing
+                    ajax: {
+                        cache: true, //disable cache (please enable and view in console log to see different)
+                        url: "/api/gettable/"+params,
+                        dataSrc: 'nilai',
+                    },
+                    columns: [
+                        {}, //number index columns 0
+                        { data: 'kode_matkul' },
+                        { data: 'kode_dosen' },
+                        { data: 'nilai_AB' },
+                        { data: 'nilai_CDE' },
+                        { data: 'nilai_angket' },
+                        { data: 'sent_neg' },
+                        { data: 'sent_net' },
+                        { data: 'sent_pos' },
+                        { data: 'jumlah' },
+                        { data: 'status' },
+                    ]
+                });
+                t.on('order.dt search.dt', function () {
+                    t.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
+                }).draw();
+            }
+
+        $(document).ready( function () {
+            //hide all tabs first
+            $('.val-content').hide();
+            //show the first tab content
+            var getValSelectable = $('#search_hasil_olah').val();
+            $('#tesload').loading();
+            loadtabel(getValSelectable);
+            $('#tesload').loading('stop');
+
+
+            $('#search_hasil_olah').change(function () {
+                var dropdown = $('#search_hasil_olah').val();
+                //first hide all tabs again when a new option is selected
+                $('.val-content').hide();
+                //then show the tab content of whatever option value was selected
+                $('#'+ dropdown).show();
+            });
+            // datatable section 
+            $('.tabel_hasil').DataTable();
+            // show hidden tab
+            $('#' + getValSelectable).show();
+        } );
+    </script>
+</body>
+
+</html>
