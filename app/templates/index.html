@@ -3,23 +3,31 @@
 
 <head>
     {% include "head.html" %}
+    <script src="../static/js/lib/echart/echart4/echarts.min.js"></script>
 </head>
 
 <body>
     <div class="container">
-        <div class="row">
+        <div class="row mt-4 mb-4">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
                         <h2 class="h1 text-center text-danger text-capitalize">Information Retrieval</h2>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="olah">
-                            <div class="form-group mt-2">
-                                <input type="text" class="form-control" id="query" name="query" placeholder="Enter Query">
+                        <form id="myForm">
+                            <div class="input-group">
+                                <input type="text" class="form-control rounded-0" id="query" name="query" placeholder="Enter Query" required>
+                                <div class="input-group-prepend">
+                                    <button type="submit" id="submitForm" class="btn btn-primary">Submit</button>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Submit</button>
                         </form>
+                    </div>
+                    <div id="dsd"></div>
+                    <div class="card-footer" id="loading">
+                        <div id="pesan"></div>
+                        <div id="tampilchart"></div>
                     </div>
                 </div>
             </div>
@@ -27,6 +35,99 @@
     </div>
     <!-- All Jquery -->
     {% include "script.html" %}
+    <script>
+        $(function () {
+            //ketika submit button d click
+            $("#submitForm").click(function () {
+                $("#submitForm").attr("disabled", true);
+                //do ajax proses
+                $.ajax({
+                    url: "/olah",
+                    type: "POST", //form method
+                    data: $("#myForm").serialize(),
+                    // contentType: 'application/json;charset=UTF-8', # if centnt type json
+                    contentType: 'application/x-www-form-urlencoded', //encode data content type
+                    dataType: "json", //misal kita ingin format datanya brupa json
+                    beforeSend: function () {
+                        //lakukan apasaja sambil menunggu proses selesai disini
+                        //misal tampilkan loading                   
+                        $('#loading').loading(
+                            {
+                                theme:'dark',
+                                message: 'Please wait, maybe this take several time to process'
+                            }
+                        );
+                    },
+                    success: function (data) { //or response
+                        // var stat_res = JSON.stringify(data);
+                        // var stat_res = $.parseJSON(data);
+                        // console.log(data[0]["error"]);
+                        // if (data[0]["error"]==true){
+                        if (data.error==true){
+                            $('#loading').loading('stop');
+                            console.log("please input a query");
+                            $("#pesan").html('<div class="alert alert-danger" role="alert"><strong>please input a query</strong></div>');
+                        }else{                            
+                            $('#loading').loading({ message: "loading graph" });
+                            // console.log(data.data);
+                            // $('#tampilchart').html(data.data);
+                            $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
+                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
+                            // based on prepared DOM, initialize echarts instance
+                            // myChart.showLoading();
+                            var myChart = echarts.init(document.getElementById('echartgraph'));
+                            // var node = JSON.stringify(data[0]["node"]);
+                            // var edge = JSON.stringify(data[0]["edge"]);
+                            var node = data.node;
+                            var edge = data.edge;
+                            option = {
+                                // title: {
+                                //     text: 'Graph yang terbentuk'
+                                // },
+                                animationDuration: 1500,
+                                animationEasingUpdate: 'quinticInOut',
+                                series: [{
+                                        type: 'graph',
+                                        layout: 'none',
+                                        data: node,
+                                        links: edge,
+                                        // edges: edge,
+                                        roam: true,
+                                        focusNodeAdjacency: true,
+                                        itemStyle: {
+                                            normal: {
+                                                borderColor: '#fff',
+                                                borderWidth: 1,
+                                                shadowBlur: 1,
+                                                shadowColor: 'rgba(0, 0, 0, 0.3)'
+                                            }
+                                        },
+                                        lineStyle: {
+                                            color: 'source',
+                                            curveness: 0.3
+                                        },
+                                    }
+                                    ]
+                                };
+                            myChart.setOption(option);
+                            // window.onresize = function () {
+                            //     myChart.resize();
+                            // };
+                            $('#loading').loading('stop');
+                        }                        
+                        $("#submitForm").removeAttr("disabled");
+                    },
+                    error: function (xhr, Status, err) {
+                        $('#loading').loading('stop');
+                        console.log("Something wrong :(");                        
+                        $("#submitForm").removeAttr("disabled");
+                        // console.log(err);
+                    }
+                    }); 
+                    return false;
+                })
+            });
+    </script>
 </body>
 
 </html>
