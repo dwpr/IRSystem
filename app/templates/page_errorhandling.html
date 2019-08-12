@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% include "head.html" %}
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-2"></div>
+	        <div class="col-md-8">
+	        	<div class="card">
+	        		<div class="card-header"><h2 class="h1 text-center text-danger text-capitalize">404</h2></div>
+	        		<div class="card-body">
+	        			<div class="alert-info p-2 text-center text-uppercase">
+							{{message}}
+							<br>
+						</div>
+	        		</div>
+	        		<div class="card-footer">
+	        			<center>
+							<p class="text-muted text-sm-center">
+								You will be redirected in <span id="counter">10</span> second(s)
+							</p>
+								<script type="text/javascript">
+								function countdown() {
+								    var i = document.getElementById('counter');
+								    if (parseInt(i.innerHTML)<=0) {
+								        location.href = 'index';
+								    }
+								    i.innerHTML = parseInt(i.innerHTML)-1;
+								}
+								setInterval(function(){ countdown(); },1000);
+								</script>
+	        			</center>
+	        		</div>
+	        	</div>
+	        </div>
+			<div class="col-md-2"></div>
+		</div>
+	</div>
+</body>
+</html>
