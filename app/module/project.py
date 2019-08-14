@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 from sklearn.metrics.pairwise import cosine_similarity
+from fuzzywuzzy import fuzz
 stemmer = StemmerFactory().create_stemmer()
 remover = StopWordRemoverFactory().create_stop_word_remover()
 katabaku = pd.read_csv('app/data/vocab_katabaku.csv')
@@ -53,6 +54,47 @@ def hexCodeColor():
     z = a + b + c
     return "#" + z.upper()
 
+#get json
+def showJSON(save, dfCosineClean):
+    nodes = []
+    edges = []
+    param = len(save)
+    for x in range(param):
+        # random for plot only
+        kordY = int(random.randint(0, param))
+        # random for plot only
+        kordX = int(random.randint(0, param))
+        aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
+        isi_nodes = {
+            "color": hexCodeColor(),
+            "label": aut,
+            "y": kordY,
+            "x": kordX,
+            "id": aut,
+            # biar kelihatan kali 10 atau terserah
+            "size": int(round(save[x]["Cosine"].sum(axis=0)*(param/10), 2))
+        }
+        nodes.append(isi_nodes)  # save node
+        for y in save[x]["Judul"]:
+            contain = dfCosineClean.loc[dfCosineClean['Judul'].isin([y])]
+            checkCountAuthor = list(
+                dict.fromkeys(contain["Author"]))
+            if(len(checkCountAuthor) > 0):
+                for z in checkCountAuthor:
+                    if aut != z:  # if same will continue
+                        isi_edges = {
+                            "sourceID": aut,
+                            "targetID": z,
+                        }
+                        edges.append(isi_edges)  # save edges kecil
+
+    data_json = {
+        "nodes": nodes,
+        "edges": edges
+    }
+    return data_json
+
+
 @app.route('/', methods=['GET', 'POST'])
 def Index():
     return render_template('index.html')
@@ -91,43 +133,6 @@ def olah():
                     save.append(sortBy.reset_index(drop=True))  # save
             #only get df cosine clean
             dfCosineClean = dfFinalResult.loc[(dfFinalResult["Cosine"]>0) & (dfFinalResult["Cosine"]<1)]
-            #get json
-            def showJSON():
-                nodes = []
-                edges = []
-                param = len(save)
-                for x in range(param):
-                    kordY = int(random.randint(0, param))  # random for plot only
-                    kordX = int(random.randint(0, param))  # random for plot only
-                    aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
-                    isi_nodes = {
-                        "color": hexCodeColor(),
-                        "label": aut,
-                        "y": kordY,
-                        "x": kordX,
-                        "id": aut,
-                        # biar kelihatan kali 10 atau terserah
-                        "size": int(round(save[x]["Cosine"].sum(axis=0)*(param/10), 2))
-                    }
-                    nodes.append(isi_nodes)  # save node
-                    for y in save[x]["Judul"]:
-                        contain = dfCosineClean.loc[dfCosineClean['Judul'].isin([y])]
-                        checkCountAuthor = list(dict.fromkeys(contain["Author"]))
-                        if(len(checkCountAuthor) > 0):
-                            for z in checkCountAuthor:
-                                if aut != z:  # if same will continue
-                                    isi_edges = {
-                                        "sourceID": aut,
-                                        "targetID": z,
-                                    }
-                                    edges.append(isi_edges)  # save edges kecil
-
-                data_json = {
-                    "nodes": nodes,
-                    "edges": edges
-                }
-                return data_json
-
             # decrypt json
             nds=[{
                     "x": node["x"],
@@ -137,22 +142,26 @@ def olah():
                     "symbolSize": node["size"],
                     "value": node["size"],
                     "itemStyle": {"normal": {"color": node["color"]}},
-                } for node in showJSON()["nodes"]]
+                } for node in showJSON(save,dfCosineClean)["nodes"]]
 
             edgs=[{
                     "source": edge["sourceID"],
                     "target": edge["targetID"],
-                } for edge in showJSON()["edges"]]
+                } for edge in showJSON(save, dfCosineClean)["edges"]]
+            # table = [{ #this for table json maybe next featur on system
+            #     "data":x
+            #     } for x in dfCosineClean.loc[:, dfCosineClean.columns != 'PreProcess'].values.tolist()]
             # return jsonify({'data':render_template("hasil_olah.html", node=nds, edge=edgs)}) #if not via ajax json use this render template
             # return render_template("hasil_olah.html", node=nds, edge=edgs) #if not via ajax json use this render template
             data = {
                 'error':False,
                 'edge':edgs,
-                'node':nds
+                'node':nds,
+                # 'table':table,
             }
             return jsonify(data)
         else:
-            return jsonify({"error":True,'edge':[],'node':[]})
+            return jsonify({"error":True,'edge':[],'node':[],'table':[]})
     else:
         msg = ['maaf request anda tidak dapat kami penuhi']
         return render_template('page_errorhandling.html', message=msg), 302

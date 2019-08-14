@@ -26,8 +26,20 @@
                     </div>
                     <div id="dsd"></div>
                     <div class="card-footer" id="loading">
-                        <div id="pesan"></div>
-                        <div id="tampilchart"></div>
+                        <div id="pesan"></div>                        
+                        <div id="graph"></div>
+                        <div id="tabel" class="table-responsive">
+                            <table id="tabletesload" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Judul</th>
+                                        <th>Author</th>
+                                        <th>Cosine</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -36,6 +48,18 @@
     <!-- All Jquery -->
     {% include "script.html" %}
     <script>
+        $(document).ready(function () {
+            $("#tabel").hide();
+        });
+        // // this for table json maybe next featur on system
+        // function loadtabel(params) {
+        //     $.fn.dataTable.ext.errMode = 'none'; //disable error message, use throw or alert (default) to see the error
+        //     $('#tabletesload').dataTable({
+        //         // "destroy": true,
+        //         "ajax": params
+        //     });
+        // }
+
         $(function () {
             //ketika submit button d click
             $("#submitForm").click(function () {
@@ -71,8 +95,10 @@
                             $('#loading').loading({ message: "loading graph" });
                             // console.log(data.data);
                             // $('#tampilchart').html(data.data);
-                            $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
-                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
+                            // $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
+                            // $("#tabel").show(); 
+                            // loadtabel(data.table);                        
+                            $('#graph').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
                             // based on prepared DOM, initialize echarts instance
                             // myChart.showLoading();
                             var myChart = echarts.init(document.getElementById('echartgraph'));
