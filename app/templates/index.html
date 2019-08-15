@@ -78,37 +78,22 @@
                             var myChart = echarts.init(document.getElementById('echartgraph'));
                             // var node = JSON.stringify(data[0]["node"]);
                             // var edge = JSON.stringify(data[0]["edge"]);
-                            var node = data.node;
-                            var edge = data.edge;
-                            option = {
-                                // title: {
-                                //     text: 'Graph yang terbentuk'
-                                // },
-                                animationDuration: 1500,
-                                animationEasingUpdate: 'quinticInOut',
-                                series: [{
-                                        type: 'graph',
-                                        layout: 'none',
-                                        data: node,
-                                        links: edge,
-                                        // edges: edge,
-                                        roam: true,
-                                        focusNodeAdjacency: true,
-                                        itemStyle: {
-                                            normal: {
-                                                borderColor: '#fff',
-                                                borderWidth: 1,
-                                                shadowBlur: 1,
-                                                shadowColor: 'rgba(0, 0, 0, 0.3)'
-                                            }
-                                        },
-                                        lineStyle: {
-                                            color: 'source',
-                                            curveness: 0.3
-                                        },
-                                    }
-                                    ]
-                                };
+                            var dt = data.scatter;
+                            // console.log(dt);
+                            option = {                              
+                                xAxis: {
+                                    show: false
+                                },
+                                yAxis: {
+                                    show: false
+                                },
+                                tooltip:{},
+                                dataZoom: [{
+                                    type: 'slider',
+                                    orient: 'vertical'
+                                }],
+                                series:dt
+                            };
                             myChart.setOption(option);
                             // window.onresize = function () {
                             //     myChart.resize();

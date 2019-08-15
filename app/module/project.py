@@ -53,6 +53,41 @@ def hexCodeColor():
     z = a + b + c
     return "#" + z.upper()
 
+#get json
+def showJSON(save):
+    scat = []
+    param = len(save)
+    pos_nums = []
+    konstanta = []
+    c=1
+    param2=param
+    while param2 != 0:
+        z = param2 % 10
+        pos_nums.append(z * c) # if wanna find number arrange
+        param2 = param2 // 10
+        c = c*10
+        konstanta.append(round(c/10))
+    # bulat = pos_nums[len(pos_nums)-1:]
+    kons = konstanta[len(konstanta)-1:]
+    for x in range(param):
+        kordX = int(random.randint(0, param))  # random for plot only
+        aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
+        nilai_cosim = save[x]["Cosine"].sum(axis=0)
+        isi = {
+            "color": hexCodeColor(),
+            "label": aut,
+            "y": round(nilai_cosim,2),
+            "x": kordX,
+            # biar kelihatan kali 10 atau terserah
+            "size": round(nilai_cosim,2)*100
+        }
+        scat.append(isi)  # save node
+
+    data_json = {
+        "scatter": scat,
+    }
+    return data_json
+
 @app.route('/', methods=['GET', 'POST'])
 def Index():
     return render_template('index.html')
@@ -89,70 +124,29 @@ def olah():
                 sortBy = groupBy.loc[(groupBy["Cosine"] > 0) & (groupBy["Cosine"] < 1)]
                 if(len(sortBy) != 0):  # if sortBy exist, greater than 0
                     save.append(sortBy.reset_index(drop=True))  # save
-            #only get df cosine clean
-            dfCosineClean = dfFinalResult.loc[(dfFinalResult["Cosine"]>0) & (dfFinalResult["Cosine"]<1)]
-            #get json
-            def showJSON():
-                nodes = []
-                edges = []
-                param = len(save)
-                for x in range(param):
-                    kordY = int(random.randint(0, param))  # random for plot only
-                    kordX = int(random.randint(0, param))  # random for plot only
-                    aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
-                    isi_nodes = {
-                        "color": hexCodeColor(),
-                        "label": aut,
-                        "y": kordY,
-                        "x": kordX,
-                        "id": aut,
-                        # biar kelihatan kali 10 atau terserah
-                        "size": int(round(save[x]["Cosine"].sum(axis=0)*(param/10), 2))
-                    }
-                    nodes.append(isi_nodes)  # save node
-                    for y in save[x]["Judul"]:
-                        contain = dfCosineClean.loc[dfCosineClean['Judul'].isin([y])]
-                        checkCountAuthor = list(dict.fromkeys(contain["Author"]))
-                        if(len(checkCountAuthor) > 0):
-                            for z in checkCountAuthor:
-                                if aut != z:  # if same will continue
-                                    isi_edges = {
-                                        "sourceID": aut,
-                                        "targetID": z,
-                                    }
-                                    edges.append(isi_edges)  # save edges kecil
-
-                data_json = {
-                    "nodes": nodes,
-                    "edges": edges
-                }
-                return data_json
-
             # decrypt json
-            nds=[{
-                    "x": node["x"],
-                    "y": node["y"],
-                    "id": node["id"],
-                    "name": node["label"],
-                    "symbolSize": node["size"],
-                    "value": node["size"],
-                    "itemStyle": {"normal": {"color": node["color"]}},
-                } for node in showJSON()["nodes"]]
-
-            edgs=[{
-                    "source": edge["sourceID"],
-                    "target": edge["targetID"],
-                } for edge in showJSON()["edges"]]
-            # return jsonify({'data':render_template("hasil_olah.html", node=nds, edge=edgs)}) #if not via ajax json use this render template
-            # return render_template("hasil_olah.html", node=nds, edge=edgs) #if not via ajax json use this render template
+            isi_scatter = [{
+                "name": sc["label"],
+                "type": 'scatter',
+                "data": [[sc["x"], sc["y"]]],
+                "symbolSize": sc["size"],
+                "label": {
+                    "show":"true",
+                    "position":"top",
+                    "formatter":"{a}"
+                },
+                "itemStyle": {
+                    "opacity": 0.4,
+                    "normal": {"color": sc["color"]}
+                }
+            } for sc in showJSON(save)["scatter"]]
             data = {
                 'error':False,
-                'edge':edgs,
-                'node':nds
+                'scatter':isi_scatter,
             }
             return jsonify(data)
         else:
-            return jsonify({"error":True,'edge':[],'node':[]})
+            return jsonify({"error":True,'scatter':[]})
     else:
         msg = ['maaf request anda tidak dapat kami penuhi']
         return render_template('page_errorhandling.html', message=msg), 302
