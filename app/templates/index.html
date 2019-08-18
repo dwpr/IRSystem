@@ -72,22 +72,36 @@
                             // console.log(data.data);
                             // $('#tampilchart').html(data.data);
                             $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
-                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
+                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph2'></div>");
                             // based on prepared DOM, initialize echarts instance
                             // myChart.showLoading();
                             var myChart = echarts.init(document.getElementById('echartgraph'));
+                            var myChart2 = echarts.init(document.getElementById('echartgraph2'));
                             // var node = JSON.stringify(data[0]["node"]);
                             // var edge = JSON.stringify(data[0]["edge"]);
-                            var dt = data.scatter;
-                            // console.log(dt);
+                            var dt = data.scatterCos;
                             option = {                              
                                 xAxis: {
                                     show: false
                                 },
                                 yAxis: {
-                                    show: false
+                                    show: false,
                                 },
-                                tooltip:{},
+                                tooltip:{
+                                    position: "top"
+                                },
+                                toolbox: {
+                                    left: 'center',
+                                    top:'top',
+                                    feature: {
+                                        dataZoom: {
+                                            title:{
+                                                zoom:"zoom /select data",
+                                                back:"reset to normal"
+                                            }
+                                        }
+                                    }
+                                },
                                 dataZoom: [{
                                     type: 'slider',
                                     orient: 'vertical'
@@ -95,9 +109,40 @@
                                 series:dt
                             };
                             myChart.setOption(option);
-                            // window.onresize = function () {
-                            //     myChart.resize();
-                            // };
+                            var dt2 = data.scatterFuzz;
+                            option2 = {
+                                xAxis: {
+                                    show: false
+                                },
+                                yAxis: {
+                                    show: false,
+                                },
+                                tooltip: {
+                                    position: "top"
+                                },
+                                toolbox: {
+                                    left: 'center',
+                                    top: 'top',
+                                    feature: {
+                                        dataZoom: {
+                                            title: {
+                                                zoom: "zoom /select data",
+                                                back: "reset to normal"
+                                            }
+                                        }
+                                    }
+                                },
+                                dataZoom: [{
+                                    type: 'slider',
+                                    orient: 'vertical'
+                                }],
+                                series: dt2
+                            };
+                            myChart2.setOption(option2);
+                            window.onresize = function () {
+                                myChart.resize();
+                                myChart2.resize();
+                            };
                             $('#loading').loading('stop');
                         }                        
                         $("#submitForm").removeAttr("disabled");
