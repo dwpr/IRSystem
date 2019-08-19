@@ -87,8 +87,61 @@ def Index():
     return render_template("index.html")
 
 
-@app.route("/olah", methods=["GET", "POST"])
-def olah():
+@app.route("/fuzzy", methods=["GET", "POST"])
+def fuzzy():
+    if request.method == "GET":
+        msg = ["maaf halaman yang anda minta tidak dapat terpenuhi / tidak ada"]
+        return render_template("page_errorhandling.html", message=msg), 512
+    elif request.method == "POST":
+        query = str(request.form["query"])  # if use form
+        if(len(query) > 0):
+            # query = str(request.json["query"]) #if use other like ajax json
+            tesData = [preProcess(query)]
+            trainData = [x for x in data_training["PreProcess"]]
+            # for fuzzy method
+            saveFuzzy = []
+            queryFuzzy = str(tesData)
+            for j in range(len(trainData)):
+                # karena dicocokkan dengan yang sudah ke pre-proces, sebenarnya tidak dipre-process tidak apa-apa cuma biar lebih clean saja :D
+                tokenSetRatio = fuzz.token_set_ratio(
+                    queryFuzzy, str(trainData[j]))
+                saveFuzzy.append([str(data_training["Judul"][j]), str(
+                    data_training["Author"][j]), tokenSetRatio])
+            dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Author", "TSR"])  # Token Set Ratio
+            # sort cosime and tsr for group by author in node
+            author = list(dict.fromkeys([str(x)for x in data_training["Author"]]))
+            sortGroupFuzz = []
+            for x in range(len(author)):
+                groupBy = dfTSR.loc[dfTSR["Author"].isin([str(author[x])])]
+                # value want to use similiar match string grater than 40%
+                sortBy = groupBy.loc[groupBy["TSR"] > 40]
+                if(len(sortBy) != 0):
+                    sortGroupFuzz.append(sortBy.reset_index(drop=True))
+
+            isi_scatterFuzz = [{
+                "name": sc["label"],
+                "type": "scatter",
+                "data": [[sc["x"], sc["y"]]],
+                "symbolSize": sc["size"],
+                "label": {
+                    "show": "true",
+                    "position": "top",
+                    "formatter": "{a}"
+                },
+                "itemStyle": {
+                    "opacity": 0.4,
+                    "normal": {"color": sc["color"]}
+                }
+            } for sc in showJSON(sortGroupFuzz, "fuzzy")]  # fuzzy token set ratio
+            return jsonify({"error": False, "scatter": isi_scatterFuzz,"type":"Fuzzy Token Set Ratio"})
+        else:
+            return jsonify({"error": True, "scatter": [],"type":[]})
+    else:
+        msg = ["maaf request anda tidak dapat kami penuhi"]
+        return render_template("page_errorhandling.html", message=msg), 302
+
+@app.route("/cosine", methods=["GET", "POST"])
+def cosine():
     if request.method == "GET":
         msg = ["maaf halaman yang anda minta tidak dapat terpenuhi / tidak ada"]
         return render_template("page_errorhandling.html",message=msg), 512       
@@ -109,28 +162,15 @@ def olah():
             # save to dataframe
             dfCosime = pd.DataFrame(cosim[1:],columns=["Cosine"]) # get cosim that not include self (1)
             dfFinalResult = pd.concat([data_training,dfCosime],axis=1) # and concat add to train dtaframe (limit to 50 cause many)
-            # for fuzzy method
-            saveFuzzy = []
-            queryFuzzy = str(tesData)
-            for j in range(len(trainData)):
-                # karena dicocokkan dengan yang sudah ke pre-proces, sebenarnya tidak dipre-process tidak apa-apa cuma biar lebih clean saja :D
-                tokenSetRatio = fuzz.token_set_ratio(queryFuzzy, str(trainData[j]))
-                saveFuzzy.append([str(data_training["Judul"][j]), str(data_training["Author"][j]), tokenSetRatio])
-            dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Author", "TSR"])  # Token Set Ratio
             # sort cosime and tsr for group by author in node
             author = list(dict.fromkeys([str(x) for x in data_training["Author"]]))
             sortGroupCos = []
-            sortGroupFuzz = []
             for x in range(len(author)):
                 groupBy = dfFinalResult.loc[dfFinalResult["Author"].isin([str(author[x])])]
-                groupBy2 = dfTSR.loc[dfTSR["Author"].isin([str(author[x])])]
                 # select only have cosine value range 0-1
                 sortBy = groupBy.loc[(groupBy["Cosine"] > 0) & (groupBy["Cosine"] < 1)] #all cosine except 0, maybe this can
-                sortBy2 = groupBy2.loc[groupBy2["TSR"]>40] #value want to use similiar match string grater than 40%
                 if(len(sortBy) != 0):  # if sortBy exist, greater than 0
                     sortGroupCos.append(sortBy.reset_index(drop=True))  # save
-                if(len(sortBy2) != 0):
-                    sortGroupFuzz.append(sortBy2.reset_index(drop=True))
             # decrypt json
             isi_scatterCos = [{
                 "name": sc["label"],
@@ -148,29 +188,13 @@ def olah():
                 }
             } for sc in showJSON(sortGroupCos,"cosine")] # cosine
 
-            isi_scatterFuzz = [{
-                "name": sc["label"],
-                "type": "scatter",
-                "data": [[sc["x"],sc["y"]]],
-                "symbolSize": sc["size"],
-                "label": {
-                    "show": "true",
-                    "position": "top",
-                    "formatter": "{a}"
-                },
-                "itemStyle": {
-                    "opacity": 0.4,
-                    "normal": {"color": sc["color"]}
-                }
-            } for sc in showJSON(sortGroupFuzz,"fuzzy")]  # fuzzy token set ratio
-            print(len(isi_scatterCos))
-            print(len(isi_scatterFuzz))
-            return jsonify({"error":False,"scatterCos":isi_scatterCos,"scatterFuzz":isi_scatterFuzz})
+            return jsonify({"error":False,"scatter":isi_scatterCos,"type":"Cosine"})
         else:
-            return jsonify({"error":True,"scatterCos":[],"scatterFuzz":[]})
+            return jsonify({"error":True,"scatter":[],"type":[]})
     else:
         msg = ["maaf request anda tidak dapat kami penuhi"]
         return render_template("page_errorhandling.html", message=msg), 302
+
 @app.route("/index", methods=["GET", "POST"])
 def Indeks():
     return redirect(url_for("Index"))

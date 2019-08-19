@@ -16,10 +16,23 @@
                     </div>
                     <div class="card-body">
                         <form id="myForm">
-                            <div class="input-group">
-                                <input type="text" class="form-control rounded-0" id="query" name="query" placeholder="Enter Query" required>
-                                <div class="input-group-prepend">
-                                    <button type="submit" id="submitForm" class="btn btn-primary">Submit</button>
+                            <div>
+                                <label class="mr-sm-2" for="inlineFormCustomSelect">Search</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control rounded-0" id="query" name="query" placeholder="Enter Query" required>
+                                    <div class="input-group-prepend">
+                                        <button type="submit" id="submitForm" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+                            </div>                            
+                            <div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="customRadioInline1" value="cosine" name="optradio" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="customRadioInline1">Cosine Method</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="customRadioInline2" value="fuzzy" name="optradio" class="custom-control-input">
+                                    <label class="custom-control-label" for="customRadioInline2">Fuzzy Token Set Ratio Method</label>
                                 </div>
                             </div>
                         </form>
@@ -40,9 +53,16 @@
             //ketika submit button d click
             $("#submitForm").click(function () {
                 $("#submitForm").attr("disabled", true);
+                // console.log($("#myForm").serialize());
+                var dat = $("input[name='optradio']:checked").val();
+                if(dat=='cosine'){
+                    var url = '/cosine';
+                }else{
+                    var url = '/fuzzy';
+                }
                 //do ajax proses
                 $.ajax({
-                    url: "/olah",
+                    url: url,
                     type: "POST", //form method
                     data: $("#myForm").serialize(),
                     // contentType: 'application/json;charset=UTF-8', # if centnt type json
@@ -65,14 +85,11 @@
                             $("#pesan").html('<div class="alert alert-danger" role="alert"><strong>please input a query</strong></div>');
                         }else{                            
                             $('#loading').loading({ message: "loading graph" });
-                            // console.log(data.data);
-                            // $('#tampilchart').html(data.data);
-                            $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
-                            $('#tampilchart').html("<div class='alert alert-info text-center text-capitalize'>Cosine</div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div><div class='alert alert-info text-center text-capitalize'>Fuzzy Token Set Ratio</div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph2'></div>");
+                            $("#pesan").html('<div class="alert alert-info text-center text-capitalize" role="alert">Graph <strong>'+data.type+'</strong> yang terbentuk</strong></div>');
+                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
                             // based on prepared DOM, initialize echarts instance
                             var myChart = echarts.init(document.getElementById('echartgraph'));
-                            var myChart2 = echarts.init(document.getElementById('echartgraph2'));
-                            var dt = data.scatterCos;
+                            var dt = data.scatter;
                             option = {                              
                                 xAxis: {
                                     show: false
@@ -102,39 +119,8 @@
                                 series:dt
                             };
                             myChart.setOption(option);
-                            var dt2 = data.scatterFuzz;
-                            option2 = {
-                                xAxis: {
-                                    show: false
-                                },
-                                yAxis: {
-                                    show: false,
-                                },
-                                tooltip: {
-                                    position: "top"
-                                },
-                                toolbox: {
-                                    left: 'center',
-                                    top: 'top',
-                                    feature: {
-                                        dataZoom: {
-                                            title: {
-                                                zoom: "zoom /select data",
-                                                back: "reset to normal"
-                                            }
-                                        }
-                                    }
-                                },
-                                dataZoom: [{
-                                    type: 'slider',
-                                    orient: 'vertical'
-                                }],
-                                series: dt2
-                            };
-                            myChart2.setOption(option2);
                             window.onresize = function () {
                                 myChart.resize();
-                                myChart2.resize();
                             };
                             $('#loading').loading('stop');
                         }                        
