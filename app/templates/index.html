@@ -59,10 +59,6 @@
                         );
                     },
                     success: function (data) { //or response
-                        // var stat_res = JSON.stringify(data);
-                        // var stat_res = $.parseJSON(data);
-                        // console.log(data[0]["error"]);
-                        // if (data[0]["error"]==true){
                         if (data.error==true){
                             $('#loading').loading('stop');
                             console.log("please input a query");
@@ -72,13 +68,10 @@
                             // console.log(data.data);
                             // $('#tampilchart').html(data.data);
                             $("#pesan").html('<div class="alert alert-success text-center" role="alert"><strong>Graph yang terbentuk</strong></div>');
-                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph2'></div>");
+                            $('#tampilchart').html("<div class='alert alert-info text-center text-capitalize'>Cosine</div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div><div class='alert alert-info text-center text-capitalize'>Cosine</div><div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph2'></div>");
                             // based on prepared DOM, initialize echarts instance
-                            // myChart.showLoading();
                             var myChart = echarts.init(document.getElementById('echartgraph'));
                             var myChart2 = echarts.init(document.getElementById('echartgraph2'));
-                            // var node = JSON.stringify(data[0]["node"]);
-                            // var edge = JSON.stringify(data[0]["edge"]);
                             var dt = data.scatterCos;
                             option = {                              
                                 xAxis: {

@@ -77,9 +77,6 @@ def showJSON(save,choice):
             "label": aut,
             "y": kordY,
             "x": kordX,
-            # biar kelihatan kali 10 atau terserah
-            # "size": round(nilai_cosim, 2)*100
-            # "size": random.uniform(0, round(nilai_cosim)*100)
             "size": size
         }
         scat.append(isi)  # save node
@@ -129,7 +126,7 @@ def olah():
                 groupBy2 = dfTSR.loc[dfTSR["Author"].isin([str(author[x])])]
                 # select only have cosine value range 0-1
                 sortBy = groupBy.loc[(groupBy["Cosine"] > 0) & (groupBy["Cosine"] < 1)] #all cosine except 0, maybe this can
-                sortBy2 = groupBy2.loc[groupBy2["TSR"]>40] #value want to use similiar match string grater tahn 50%
+                sortBy2 = groupBy2.loc[groupBy2["TSR"]>40] #value want to use similiar match string grater than 40%
                 if(len(sortBy) != 0):  # if sortBy exist, greater than 0
                     sortGroupCos.append(sortBy.reset_index(drop=True))  # save
                 if(len(sortBy2) != 0):
@@ -149,7 +146,7 @@ def olah():
                     "opacity": 0.4,
                     "normal": {"color": sc["color"]}
                 }
-            } for sc in showJSON(sortGroupCos,"cosine")] # 0 is cosine
+            } for sc in showJSON(sortGroupCos,"cosine")] # cosine
 
             isi_scatterFuzz = [{
                 "name": sc["label"],
@@ -165,7 +162,7 @@ def olah():
                     "opacity": 0.4,
                     "normal": {"color": sc["color"]}
                 }
-            } for sc in showJSON(sortGroupFuzz,"fuzzy")]  # 1 or grater is tsr
+            } for sc in showJSON(sortGroupFuzz,"fuzzy")]  # fuzzy token set ratio
             print(len(isi_scatterCos))
             print(len(isi_scatterFuzz))
             return jsonify({"error":False,"scatterCos":isi_scatterCos,"scatterFuzz":isi_scatterFuzz})
