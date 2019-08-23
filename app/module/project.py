@@ -4,9 +4,11 @@ import pandas as pd
 import nltk
 import string
 import random
+from nltk.corpus import stopwords  # nltk stopwords list bahasa inggris
+from nltk.stem import PorterStemmer #nltk stemming
 from sklearn.feature_extraction.text import TfidfVectorizer
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
-from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory #sastrawi stemming
+from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory #sastrawi stopword
 from sklearn.metrics.pairwise import cosine_similarity
 from fuzzywuzzy import fuzz
 stemmer = StemmerFactory().create_stemmer()
@@ -14,12 +16,25 @@ remover = StopWordRemoverFactory().create_stop_word_remover()
 katabaku = pd.read_csv("app/data/vocab_katabaku.csv")
 data_training = pd.read_csv("app/data/finalPrerapi.csv")
 baku = [x for x in katabaku["kata_baku"]]
+translator = str.maketrans('', '', string.punctuation)
 
+def stemmerEN(text):
+    porter = PorterStemmer()  # mendeklarasikan porter untuk memanggil kelas PorterStemmer
+    # mendeklarasikan stop untuk proses filtering bahasa inggris
+    stop = set(stopwords.words('english')) #stopword english
+    # proses tekenizing
+    text = [i for i in text.split() if i not in stop]
+    text = ' '.join(text)
+    # proses menerjemahkan dan stemming bahasa inggris
+    preprocessed_text = text.translate(translator)
+    text_stem = porter.stem(preprocessed_text)
+    return text_stem
 
 def preProcess(query):
     remove_number = ''.join(filter(lambda s: not str(s).isdigit(), query))
     lowercase = remove_number.lower()  # kecilkan semua teks
-    textStemmed = stemmer.stem(lowercase)  # stemming teks
+    stemEn = stemmerEN(lowercase)
+    textStemmed = stemmer.stem(stemEn)  # stemming teks indonesia
     textClean = remover.remove(textStemmed)  # teks stopword remover
     # harus string dikasih koma atau tanda baca lain untuk mengatasi entering dan setiap kalimat
     convert_to_string = "".join(textClean)
@@ -62,13 +77,14 @@ def showJSON(save,choice):
     for x in range(param):
         kordX = int(random.randint(0, param))  # random for plot only
         aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
+        title = [i for i in save[x]["Judul"]]
         if(pilih=="fuzzy"):
             nilai = save[x]["TSR"].sum(axis=0)
-            size = len(save[x]["TSR"])*10
+            size = len(save[x]["TSR"])
             kordY = float(round(nilai))
         elif(pilih=="cosine"):
             nilai = save[x]["Cosine"].sum(axis=0)
-            size = len(save[x]["Cosine"])*10
+            size = len(save[x]["Cosine"])
             kordY = float(round(nilai,2))
         else:
             return "maaf module lain belum ada"
@@ -77,7 +93,9 @@ def showJSON(save,choice):
             "label": aut,
             "y": kordY,
             "x": kordX,
-            "size": size
+            "size": size*10,
+            "count":size,
+            "title":title,
         }
         scat.append(isi)  # save node
     return scat
@@ -121,7 +139,7 @@ def fuzzy():
             isi_scatterFuzz = [{
                 "name": sc["label"],
                 "type": "scatter",
-                "data": [[sc["x"], sc["y"]]],
+                "data": [[sc["x"], sc["y"], sc["count"],sc["title"]]],
                 "symbolSize": sc["size"],
                 "label": {
                     "show": "true",
@@ -175,7 +193,7 @@ def cosine():
             isi_scatterCos = [{
                 "name": sc["label"],
                 "type": "scatter",
-                "data": [[sc["x"], sc["y"]]],
+                "data": [[sc["x"], sc["y"],sc["count"],sc["title"]]],
                 "symbolSize": sc["size"],
                 "label": {
                     "show":"true",
@@ -188,7 +206,7 @@ def cosine():
                 }
             } for sc in showJSON(sortGroupCos,"cosine")] # cosine
 
-            return jsonify({"error":False,"scatter":isi_scatterCos,"type":"Cosine"})
+            return jsonify({"error":False,"scatter":isi_scatterCos, "type":"Cosine"})
         else:
             return jsonify({"error":True,"scatter":[],"type":[]})
     else:

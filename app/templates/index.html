@@ -37,7 +37,11 @@
                             </div>
                         </form>
                     </div>
-                    <div id="dsd"></div>
+                    <div id="dsd">
+                        <div class="progress rounded-0">
+                            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
                     <div class="card-footer" id="loading">
                         <div id="pesan"></div>
                         <div id="tampilchart"></div>
@@ -46,10 +50,31 @@
             </div>
         </div>
     </div>
+    <div class="modal" id="myModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header rounded-0 bg-primary ">
+                    <h5 id="judulModal" class="modal-title text-capitalize text-white"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-info text-white"><p class="m-2">Judul</p></div>
+                    <div>
+                        <p class="pl-2" id="isiModal"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-0" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- All Jquery -->
     {% include "script.html" %}
+    </script>
     <script>
-        $(function () {
             //ketika submit button d click
             $("#submitForm").click(function () {
                 $("#submitForm").attr("disabled", true);
@@ -61,7 +86,29 @@
                     var url = '/fuzzy';
                 }
                 //do ajax proses
-                $.ajax({
+                $.ajax({                    
+                    xhr: function () {
+                        var xhr = new window.XMLHttpRequest();
+                        //Upload progress
+                        xhr.upload.addEventListener("progress", function (evt) {
+                            if (evt.lengthComputable) {
+                                var percentComplete = evt.loaded / evt.total;
+                                //Do something with upload progress
+                                // console.log(percentComplete);
+                            }
+                        }, false);
+                        //Download progress
+                        xhr.addEventListener("progress", function (evt) {
+                            if (evt.lengthComputable) {
+                                var percentComplete = evt.loaded / evt.total;
+                                //Do something with download progress
+                                // console.log(percentComplete);
+                                $(".progress-bar").attr('aria-valuenow', percentComplete * 100).css({ width: percentComplete * 100 + '%' }).html(percentComplete * 100 + '%');
+                                // $(".progress-bar").attr('aria-valuenow', percentComplete * 100).width(percentComplete * 100).html(percentComplete * 100 + '%');
+                            }
+                        }, false);
+                        return xhr;
+                    },
                     url: url,
                     type: "POST", //form method
                     data: $("#myForm").serialize(),
@@ -98,7 +145,12 @@
                                     show: false,
                                 },
                                 tooltip:{
-                                    position: "top"
+                                    // position: "top"                                    
+                                    formatter: function (obj) {
+                                        // console.log(obj);
+                                        var value = obj.value;
+                                        return obj.seriesName+'<br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
+                                    }
                                 },
                                 toolbox: {
                                     left: 'center',
@@ -119,6 +171,12 @@
                                 series:dt
                             };
                             myChart.setOption(option);
+                            myChart.on('click','series',function (obj) {
+                                var dt = obj.value[3];
+                                $("#judulModal").html(obj.seriesName);                   
+                                $("#isiModal").html(dt.join('<br><br>'));                   
+                                $('#myModal').modal('show');                                
+                            });
                             window.onresize = function () {
                                 myChart.resize();
                             };
@@ -134,8 +192,7 @@
                     }
                     }); 
                     return false;
-                })
-            });
+                });
     </script>
 </body>
 
