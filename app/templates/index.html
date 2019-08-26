@@ -38,9 +38,6 @@
                         </form>
                     </div>
                     <div id="dsd">
-                        <div class="progress rounded-0">
-                            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
                     </div>
                     <div class="card-footer" id="loading">
                         <div id="pesan"></div>
@@ -60,6 +57,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <h7 class="badge badge-success" id="instansiModal" class="modal-title text-capitalize text-white"></h7>
                     <div class="bg-info text-white"><p class="m-2">Judul</p></div>
                     <div>
                         <p class="pl-2" id="isiModal"></p>
@@ -75,6 +73,17 @@
     {% include "script.html" %}
     </script>
     <script>
+            // $(document).ajaxSend(function () { Pace.restart(); });
+            // $(document).ajaxComplete(function () { Pace.restart(); });
+            // $(document).ajaxStart(function () { Pace.restart(); });
+            // paceOptions = {
+            //     // Disable the 'elements' source
+            //     elements: false,
+
+            //     // Only show the progress on regular and ajax-y page navigation,
+            //     // not every request
+            //     restartOnRequestAfter: false
+            // }
             //ketika submit button d click
             $("#submitForm").click(function () {
                 $("#submitForm").attr("disabled", true);
@@ -86,29 +95,7 @@
                     var url = '/fuzzy';
                 }
                 //do ajax proses
-                $.ajax({                    
-                    xhr: function () {
-                        var xhr = new window.XMLHttpRequest();
-                        //Upload progress
-                        xhr.upload.addEventListener("progress", function (evt) {
-                            if (evt.lengthComputable) {
-                                var percentComplete = evt.loaded / evt.total;
-                                //Do something with upload progress
-                                // console.log(percentComplete);
-                            }
-                        }, false);
-                        //Download progress
-                        xhr.addEventListener("progress", function (evt) {
-                            if (evt.lengthComputable) {
-                                var percentComplete = evt.loaded / evt.total;
-                                //Do something with download progress
-                                // console.log(percentComplete);
-                                $(".progress-bar").attr('aria-valuenow', percentComplete * 100).css({ width: percentComplete * 100 + '%' }).html(percentComplete * 100 + '%');
-                                // $(".progress-bar").attr('aria-valuenow', percentComplete * 100).width(percentComplete * 100).html(percentComplete * 100 + '%');
-                            }
-                        }, false);
-                        return xhr;
-                    },
+                $.ajax({       
                     url: url,
                     type: "POST", //form method
                     data: $("#myForm").serialize(),
@@ -149,7 +136,7 @@
                                     formatter: function (obj) {
                                         // console.log(obj);
                                         var value = obj.value;
-                                        return obj.seriesName+'<br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
+                                        return obj.seriesName+'<br><b>'+value[4]+'</b><br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
                                     }
                                 },
                                 toolbox: {
@@ -173,7 +160,8 @@
                             myChart.setOption(option);
                             myChart.on('click','series',function (obj) {
                                 var dt = obj.value[3];
-                                $("#judulModal").html(obj.seriesName);                   
+                                $("#judulModal").html(obj.seriesName);  
+                                $("#instansiModal").html(obj.value[4]);  
                                 $("#isiModal").html(dt.join('<br><br>'));                   
                                 $('#myModal').modal('show');                                
                             });
