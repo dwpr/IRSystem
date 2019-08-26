@@ -4,6 +4,7 @@ import pandas as pd
 import nltk
 import string
 import random
+import time
 from nltk.corpus import stopwords  # nltk stopwords list bahasa inggris
 from nltk.stem import PorterStemmer #nltk stemming
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -77,6 +78,7 @@ def showJSON(save,choice):
     for x in range(param):
         kordX = int(random.randint(0, param))  # random for plot only
         aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
+        inst = str(list(dict.fromkeys(save[x]["Instansi"]))[0])
         title = [i for i in save[x]["Judul"]]
         if(pilih=="fuzzy"):
             nilai = save[x]["TSR"].sum(axis=0)
@@ -91,6 +93,7 @@ def showJSON(save,choice):
         isi = {
             "color": hexCodeColor(),
             "label": aut,
+            "instansi":inst,
             "y": kordY,
             "x": kordX,
             "size": size*10,
@@ -107,6 +110,7 @@ def Index():
 
 @app.route("/fuzzy", methods=["GET", "POST"])
 def fuzzy():
+    start_time = time.time()
     if request.method == "GET":
         msg = ["maaf halaman yang anda minta tidak dapat terpenuhi / tidak ada"]
         return render_template("page_errorhandling.html", message=msg), 512
@@ -121,11 +125,9 @@ def fuzzy():
             queryFuzzy = str(tesData)
             for j in range(len(trainData)):
                 # karena dicocokkan dengan yang sudah ke pre-proces, sebenarnya tidak dipre-process tidak apa-apa cuma biar lebih clean saja :D
-                tokenSetRatio = fuzz.token_set_ratio(
-                    queryFuzzy, str(trainData[j]))
-                saveFuzzy.append([str(data_training["Judul"][j]), str(
-                    data_training["Author"][j]), tokenSetRatio])
-            dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Author", "TSR"])  # Token Set Ratio
+                tokenSetRatio = fuzz.token_set_ratio(queryFuzzy, str(trainData[j]))
+                saveFuzzy.append([str(data_training["Judul"][j]), str(data_training["Instansi"][j]), str(data_training["Author"][j]), tokenSetRatio])
+            dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Instansi", "Author", "TSR"])  # Token Set Ratio
             # sort cosime and tsr for group by author in node
             author = list(dict.fromkeys([str(x)for x in data_training["Author"]]))
             sortGroupFuzz = []
@@ -139,7 +141,7 @@ def fuzzy():
             isi_scatterFuzz = [{
                 "name": sc["label"],
                 "type": "scatter",
-                "data": [[sc["x"], sc["y"], sc["count"],sc["title"]]],
+                "data": [[sc["x"], sc["y"], sc["count"], sc["title"], sc["instansi"], ]],
                 "symbolSize": sc["size"],
                 "label": {
                     "show": "true",
@@ -151,6 +153,7 @@ def fuzzy():
                     "normal": {"color": sc["color"]}
                 }
             } for sc in showJSON(sortGroupFuzz, "fuzzy")]  # fuzzy token set ratio
+            print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
             return jsonify({"error": False, "scatter": isi_scatterFuzz,"type":"Fuzzy Token Set Ratio"})
         else:
             return jsonify({"error": True, "scatter": [],"type":[]})
@@ -160,6 +163,7 @@ def fuzzy():
 
 @app.route("/cosine", methods=["GET", "POST"])
 def cosine():
+    start_time = time.time()
     if request.method == "GET":
         msg = ["maaf halaman yang anda minta tidak dapat terpenuhi / tidak ada"]
         return render_template("page_errorhandling.html",message=msg), 512       
@@ -193,7 +197,7 @@ def cosine():
             isi_scatterCos = [{
                 "name": sc["label"],
                 "type": "scatter",
-                "data": [[sc["x"], sc["y"],sc["count"],sc["title"]]],
+                "data": [[sc["x"], sc["y"], sc["count"], sc["title"], sc["instansi"]]],
                 "symbolSize": sc["size"],
                 "label": {
                     "show":"true",
@@ -205,7 +209,7 @@ def cosine():
                     "normal": {"color": sc["color"]}
                 }
             } for sc in showJSON(sortGroupCos,"cosine")] # cosine
-
+            print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
             return jsonify({"error":False,"scatter":isi_scatterCos, "type":"Cosine"})
         else:
             return jsonify({"error":True,"scatter":[],"type":[]})
