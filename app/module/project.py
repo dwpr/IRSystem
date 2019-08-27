@@ -136,7 +136,7 @@ def fuzzy():
                 # value want to use similiar match string grater than 40%
                 sortBy = groupBy.loc[groupBy["TSR"] > 40]
                 if(len(sortBy) != 0):
-                    sortGroupFuzz.append(sortBy.reset_index(drop=True))
+                    sortGroupFuzz.append(sortBy.sort_values(by=["TSR"], ascending=True).reset_index(drop=True))
 
             isi_scatterFuzz = [{
                 "name": sc["label"],
@@ -192,7 +192,8 @@ def cosine():
                 # select only have cosine value range 0-1
                 sortBy = groupBy.loc[(groupBy["Cosine"] > 0) & (groupBy["Cosine"] < 1)] #all cosine except 0, maybe this can
                 if(len(sortBy) != 0):  # if sortBy exist, greater than 0
-                    sortGroupCos.append(sortBy.reset_index(drop=True))  # save
+                    # save
+                    sortGroupCos.append(sortBy.sort_values(by=["Cosine"], ascending=True).reset_index(drop=True))
             # decrypt json
             isi_scatterCos = [{
                 "name": sc["label"],
