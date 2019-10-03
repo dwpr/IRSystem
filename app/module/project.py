@@ -16,6 +16,8 @@ stemmer = StemmerFactory().create_stemmer()
 remover = StopWordRemoverFactory().create_stop_word_remover()
 katabaku = pd.read_csv("app/data/vocab_katabaku.csv")
 data_training = pd.read_csv("app/data/finalPrerapi.csv")
+author = list(dict.fromkeys([str(x) for x in data_training["Author"]]))
+lembaga = list(dict.fromkeys([str(x)for x in data_training["Lembaga"]]))
 baku = [x for x in katabaku["kata_baku"]]
 translator = str.maketrans('', '', string.punctuation)
 
@@ -64,43 +66,60 @@ def hexCodeColor():
     if len(a) < 2:
         a = "0" + a
     if len(b) < 2:
-        b = "0" + b
+        b = "2" + b
     if len(c) < 2:
-        c = "0" + c
+        c = "4" + c
     z = a + b + c
     return "#" + z.upper()
+
+def groupingAut(df):
+    sortGroupCos = []
+    data = pd.DataFrame.from_dict(df)
+    for x in author:
+        groupAut = data.loc[data["Author"].isin([str(x)])]
+        sortBy = groupAut.loc[(groupAut["Cosine"] > 0) & (groupAut["Cosine"] < 1)] # all cosine except 0, maybe this can replace with some limit
+        if(len(sortBy)!=0):
+            sortGroupCos.append(sortBy.sort_values(by=["Cosine"], ascending=True).reset_index(drop=True))
+    # print(sortGroupCos[0])
+    return sortGroupCos
 
 #get json
 def showJSON(save,choice):
     scat = []
     param = len(save)
     pilih = choice
+    color = [hexCodeColor() for x in range(len(lembaga))]
     for x in range(param):
         kordX = int(random.randint(0, param))  # random for plot only
-        aut = str(list(dict.fromkeys(save[x]["Author"]))[0])
-        inst = str(list(dict.fromkeys(save[x]["Instansi"]))[0])
-        title = [i for i in save[x]["Judul"]]
-        if(pilih=="fuzzy"):
-            nilai = save[x]["TSR"].sum(axis=0)
-            size = len(save[x]["TSR"])
-            kordY = float(round(nilai))
-        elif(pilih=="cosine"):
-            nilai = save[x]["Cosine"].sum(axis=0)
-            size = len(save[x]["Cosine"])
-            kordY = float(round(nilai,2))
-        else:
-            return "maaf module lain belum ada"
-        isi = {
-            "color": hexCodeColor(),
-            "label": aut,
-            "instansi":inst,
-            "y": kordY,
-            "x": kordX,
-            "size": size*10,
-            "count":size,
-            "title":title,
-        }
-        scat.append(isi)  # save node
+        for y in range(len(lembaga)):
+            groupLem = save[x].loc[save[x]["Lembaga"].isin([str(lembaga[y])])]
+            if(len(groupLem)!=0):
+                aut = str(list(dict.fromkeys(groupLem["Author"]))[0])
+                inst = str(list(dict.fromkeys(groupLem["Instansi"]))[0])
+                lemb = str(list(dict.fromkeys(groupLem["Lembaga"]))[0])
+                title = [i for i in groupLem["Judul"]]
+                if(pilih=="fuzzy"):
+                    nilai = groupLem["TSR"].sum(axis=0)
+                    size = len(groupLem["TSR"])
+                    kordY = float(round(nilai))
+                elif(pilih=="cosine"):
+                    nilai = groupLem["Cosine"].sum(axis=0)
+                    size = len(groupLem["Cosine"])
+                    kordY = float(round(nilai,2))
+                else:
+                    return "maaf module lain belum ada"
+                isi = {
+                    "color": color[y],
+                    "label": lemb,
+                    "author": aut,
+                    "instansi":inst,
+                    "y": kordY,
+                    "x": kordX,
+                    "size": size*10,
+                    "count":size,
+                    "title":title,
+                }
+                scat.append(isi)  # save node
     return scat
 
 @app.route("/", methods=["GET", "POST"])
@@ -129,7 +148,6 @@ def fuzzy():
                 saveFuzzy.append([str(data_training["Judul"][j]), str(data_training["Instansi"][j]), str(data_training["Author"][j]), tokenSetRatio])
             dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Instansi", "Author", "TSR"])  # Token Set Ratio
             # sort cosime and tsr for group by author in node
-            author = list(dict.fromkeys([str(x)for x in data_training["Author"]]))
             sortGroupFuzz = []
             for x in range(len(author)):
                 groupBy = dfTSR.loc[dfTSR["Author"].isin([str(author[x])])]
@@ -183,35 +201,29 @@ def cosine():
             cosim=cosine_similarity(tfidf_matrix, tfidf_matrix[0:1])
             # save to dataframe
             dfCosime = pd.DataFrame(cosim[1:],columns=["Cosine"]) # get cosim that not include self (1)
-            dfFinalResult = pd.concat([data_training,dfCosime],axis=1) # and concat add to train dtaframe (limit to 50 cause many)
+            dfFinalResult = pd.concat([data_training,dfCosime],axis=1).to_dict() # and concat add to train dtaframe (limit to 50 cause many)
             # sort cosime and tsr for group by author in node
-            author = list(dict.fromkeys([str(x) for x in data_training["Author"]]))
-            sortGroupCos = []
-            for x in range(len(author)):
-                groupBy = dfFinalResult.loc[dfFinalResult["Author"].isin([str(author[x])])]
-                # select only have cosine value range 0-1
-                sortBy = groupBy.loc[(groupBy["Cosine"] > 0) & (groupBy["Cosine"] < 1)] #all cosine except 0, maybe this can
-                if(len(sortBy) != 0):  # if sortBy exist, greater than 0
-                    # save
-                    sortGroupCos.append(sortBy.sort_values(by=["Cosine"], ascending=True).reset_index(drop=True))
+            print("--- %s seconds ---" % (time.time() - start_time))
+            hasilgroup = groupingAut(dfFinalResult)
+            print("--- %s seconds ---" % (time.time() - start_time))
             # decrypt json
             isi_scatterCos = [{
                 "name": sc["label"],
                 "type": "scatter",
-                "data": [[sc["x"], sc["y"], sc["count"], sc["title"], sc["instansi"]]],
+                "data": [[sc["x"], sc["y"], sc["count"], sc["title"], sc["instansi"], sc["author"]]],
                 "symbolSize": sc["size"],
                 "label": {
                     "show":"true",
                     "position":"top",
-                    "formatter":"{a}"
+                    "formatter": "{b}{@[5]}"
                 },
                 "itemStyle": {
                     "opacity": 0.4,
                     "normal": {"color": sc["color"]}
                 }
-            } for sc in showJSON(sortGroupCos,"cosine")] # cosine
+            } for sc in showJSON(hasilgroup, "cosine")]  # cosine
             print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
-            return jsonify({"error":False,"scatter":isi_scatterCos, "type":"Cosine"})
+            return jsonify({"error":False,"scatter":isi_scatterCos, "lgd":lembaga, "type":"Cosine"})
         else:
             return jsonify({"error":True,"scatter":[],"type":[]})
     else:
@@ -221,6 +233,13 @@ def cosine():
 @app.route("/index", methods=["GET", "POST"])
 def Indeks():
     return redirect(url_for("Index"))
+
+@app.route("/makedb", methods=["GET", "POST"])
+def makedb():
+    for x in range(len(daftar_dosen)):
+        ds = Dosen(judul=daftar_dosen[x][0], nama_dosen=daftar_dosen[x][1], picture=daftar_dosen[x][2])
+        ds.save()
+    
 
 @app.errorhandler(404)
 def page_not_found(error):
