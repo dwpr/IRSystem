@@ -124,31 +124,23 @@
                             // based on prepared DOM, initialize echarts instance
                             var myChart = echarts.init(document.getElementById('echartgraph'));
                             var dt = data.scatter;
-                            option = {                              
+                            var lg = data.lgd;
+                            option = {                         
                                 xAxis: {
                                     show: false
                                 },
                                 yAxis: {
                                     show: false,
                                 },
+                                legend:{
+                                    data:lg,
+                                },
                                 tooltip:{
                                     // position: "top"                                    
                                     formatter: function (obj) {
                                         // console.log(obj);
                                         var value = obj.value;
-                                        return obj.seriesName+'<br><b>'+value[4]+'</b><br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
-                                    }
-                                },
-                                toolbox: {
-                                    left: 'center',
-                                    top:'top',
-                                    feature: {
-                                        dataZoom: {
-                                            title:{
-                                                zoom:"zoom /select data",
-                                                back:"reset to normal"
-                                            }
-                                        }
+                                        return value[5]+'<br><b>'+value[4]+'</b><br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
                                     }
                                 },
                                 dataZoom: [{
