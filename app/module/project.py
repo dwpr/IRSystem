@@ -5,13 +5,13 @@ import nltk
 import string
 import random
 import time
+import numpy as np
 from nltk.corpus import stopwords  # nltk stopwords list bahasa inggris
 from nltk.stem import PorterStemmer #nltk stemming
 from sklearn.feature_extraction.text import TfidfVectorizer
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory #sastrawi stemming
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory #sastrawi stopword
 from sklearn.metrics.pairwise import cosine_similarity
-from fuzzywuzzy import fuzz
 stemmer = StemmerFactory().create_stemmer()
 remover = StopWordRemoverFactory().create_stop_word_remover()
 katabaku = pd.read_csv("app/data/vocab_katabaku.csv")
@@ -72,42 +72,33 @@ def hexCodeColor():
     z = a + b + c
     return "#" + z.upper()
 
-def groupingAut(df):
+def groupingAut(data_numpy):
     sortGroupCos = []
-    data = pd.DataFrame.from_dict(df)
     for x in author:
-        groupAut = data.loc[data["Author"].isin([str(x)])]
-        sortBy = groupAut.loc[(groupAut["Cosine"] > 0) & (groupAut["Cosine"] < 1)] # all cosine except 0, maybe this can replace with some limit
-        if(len(sortBy)!=0):
-            sortGroupCos.append(sortBy.sort_values(by=["Cosine"], ascending=True).reset_index(drop=True))
-    # print(sortGroupCos[0])
+        # group by author and sort by cosine >0
+        selectRowNumpy = data_numpy[np.where((data_numpy[:,4] == str(x))*(data_numpy[:,6]>0))] # 4 is columns index for author and 6 is for cosine column (you can check this column in pandas view, berfore to_numpy)
+        if(len(selectRowNumpy) != 0):
+            sortGroupCos.append(selectRowNumpy)
     return sortGroupCos
 
 #get json
-def showJSON(save,choice):
+def showJSON(save):
     scat = []
     param = len(save)
-    pilih = choice
     color = [hexCodeColor() for x in range(len(lembaga))]
     for x in range(param):
         kordX = int(random.randint(0, param))  # random for plot only
+        # grouping per lembaga
         for y in range(len(lembaga)):
-            groupLem = save[x].loc[save[x]["Lembaga"].isin([str(lembaga[y])])]
-            if(len(groupLem)!=0):
-                aut = str(list(dict.fromkeys(groupLem["Author"]))[0])
-                inst = str(list(dict.fromkeys(groupLem["Instansi"]))[0])
-                lemb = str(list(dict.fromkeys(groupLem["Lembaga"]))[0])
-                title = [i for i in groupLem["Judul"]]
-                if(pilih=="fuzzy"):
-                    nilai = groupLem["TSR"].sum(axis=0)
-                    size = len(groupLem["TSR"])
-                    kordY = float(round(nilai))
-                elif(pilih=="cosine"):
-                    nilai = groupLem["Cosine"].sum(axis=0)
-                    size = len(groupLem["Cosine"])
-                    kordY = float(round(nilai,2))
-                else:
-                    return "maaf module lain belum ada"
+            groupLem = pd.DataFrame(save[x][np.where(save[x][:,2] == str(lembaga[y]))]) # and convert to pandas
+            if(len(groupLem)!=0): #dont process empty dataframe
+                title = [i for i in groupLem[0]]
+                inst = str(list(set(groupLem[1]))[0]) #instansi column number 1
+                lemb = str(list(set(groupLem[2]))[0])
+                aut = str(list(set(groupLem[4]))[0]) # aturhor column number 4
+                nilai = groupLem[6].sum(axis=0)
+                size = len(groupLem[6])
+                kordY = float(round(nilai,2))
                 isi = {
                     "color": color[y],
                     "label": lemb,
@@ -125,59 +116,6 @@ def showJSON(save,choice):
 @app.route("/", methods=["GET", "POST"])
 def Index():
     return render_template("index.html")
-
-
-@app.route("/fuzzy", methods=["GET", "POST"])
-def fuzzy():
-    start_time = time.time()
-    if request.method == "GET":
-        msg = ["maaf halaman yang anda minta tidak dapat terpenuhi / tidak ada"]
-        return render_template("page_errorhandling.html", message=msg), 512
-    elif request.method == "POST":
-        query = str(request.form["query"])  # if use form
-        if(len(query) > 0):
-            # query = str(request.json["query"]) #if use other like ajax json
-            tesData = [preProcess(query)]
-            trainData = [x for x in data_training["PreProcess"]]
-            # for fuzzy method
-            saveFuzzy = []
-            queryFuzzy = str(tesData)
-            for j in range(len(trainData)):
-                # karena dicocokkan dengan yang sudah ke pre-proces, sebenarnya tidak dipre-process tidak apa-apa cuma biar lebih clean saja :D
-                tokenSetRatio = fuzz.token_set_ratio(queryFuzzy, str(trainData[j]))
-                saveFuzzy.append([str(data_training["Judul"][j]), str(data_training["Instansi"][j]), str(data_training["Author"][j]), tokenSetRatio])
-            dfTSR = pd.DataFrame(saveFuzzy, columns=["Judul", "Instansi", "Author", "TSR"])  # Token Set Ratio
-            # sort cosime and tsr for group by author in node
-            sortGroupFuzz = []
-            for x in range(len(author)):
-                groupBy = dfTSR.loc[dfTSR["Author"].isin([str(author[x])])]
-                # value want to use similiar match string grater than 40%
-                sortBy = groupBy.loc[groupBy["TSR"] > 40]
-                if(len(sortBy) != 0):
-                    sortGroupFuzz.append(sortBy.sort_values(by=["TSR"], ascending=True).reset_index(drop=True))
-
-            isi_scatterFuzz = [{
-                "name": sc["label"],
-                "type": "scatter",
-                "data": [[sc["x"], sc["y"], sc["count"], sc["title"], sc["instansi"], ]],
-                "symbolSize": sc["size"],
-                "label": {
-                    "show": "true",
-                    "position": "top",
-                    "formatter": "{a}"
-                },
-                "itemStyle": {
-                    "opacity": 0.4,
-                    "normal": {"color": sc["color"]}
-                }
-            } for sc in showJSON(sortGroupFuzz, "fuzzy")]  # fuzzy token set ratio
-            print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
-            return jsonify({"error": False, "scatter": isi_scatterFuzz,"type":"Fuzzy Token Set Ratio"})
-        else:
-            return jsonify({"error": True, "scatter": [],"type":[]})
-    else:
-        msg = ["maaf request anda tidak dapat kami penuhi"]
-        return render_template("page_errorhandling.html", message=msg), 302
 
 @app.route("/cosine", methods=["GET", "POST"])
 def cosine():
@@ -201,7 +139,7 @@ def cosine():
             cosim=cosine_similarity(tfidf_matrix, tfidf_matrix[0:1])
             # save to dataframe
             dfCosime = pd.DataFrame(cosim[1:],columns=["Cosine"]) # get cosim that not include self (1)
-            dfFinalResult = pd.concat([data_training,dfCosime],axis=1).to_dict() # and concat add to train dtaframe (limit to 50 cause many)
+            dfFinalResult = pd.concat([data_training,dfCosime],axis=1).to_numpy() # and concat add to train dtaframe and convert to_numpy for or to_dict for better performance
             # sort cosime and tsr for group by author in node
             print("--- %s seconds ---" % (time.time() - start_time))
             hasilgroup = groupingAut(dfFinalResult)
@@ -221,7 +159,7 @@ def cosine():
                     "opacity": 0.4,
                     "normal": {"color": sc["color"]}
                 }
-            } for sc in showJSON(hasilgroup, "cosine")]  # cosine
+            } for sc in showJSON(hasilgroup)]  # cosine
             print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
             return jsonify({"error":False,"scatter":isi_scatterCos, "lgd":lembaga, "type":"Cosine"})
         else:

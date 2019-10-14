@@ -11,9 +11,9 @@
         <div class="row mt-4 mb-4">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h2 class="h1 text-center text-danger text-capitalize">IR Research</h2>
-                    </div>
+                    <!-- <div class="card-header"> -->
+                        <!-- <h2 class="h1 text-center text-danger text-capitalize">IR Research</h2> -->
+                    <!-- </div> -->
                     <div class="card-body">
                         <form id="myForm">
                             <div>
@@ -25,16 +25,16 @@
                                     </div>
                                 </div>
                             </div>                            
-                            <div>
-                                <div class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" id="customRadioInline1" value="cosine" name="optradio" class="custom-control-input" checked>
-                                    <label class="custom-control-label" for="customRadioInline1">Cosine Method</label>
-                                </div>
-                                <div class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" id="customRadioInline2" value="fuzzy" name="optradio" class="custom-control-input">
-                                    <label class="custom-control-label" for="customRadioInline2">Fuzzy Token Set Ratio Method</label>
-                                </div>
-                            </div>
+                            <!-- <div> -->
+                                <!-- <div class="custom-control custom-radio custom-control-inline"> -->
+                                    <!-- <input type="radio" id="customRadioInline1" value="cosine" name="optradio" class="custom-control-input" checked> -->
+                                    <!-- <label class="custom-control-label" for="customRadioInline1">Cosine Method</label> -->
+                                <!-- </div> -->
+                                <!-- <div class="custom-control custom-radio custom-control-inline"> -->
+                                    <!-- <input type="radio" id="customRadioInline2" value="fuzzy" name="optradio" class="custom-control-input" disabled> -->
+                                    <!-- <label class="custom-control-label" for="customRadioInline2">Fuzzy Token Set Ratio Method</label> -->
+                                <!-- </div> -->
+                            <!-- </div> -->
                         </form>
                     </div>
                     <div id="dsd">
@@ -88,12 +88,13 @@
             $("#submitForm").click(function () {
                 $("#submitForm").attr("disabled", true);
                 // console.log($("#myForm").serialize());
-                var dat = $("input[name='optradio']:checked").val();
-                if(dat=='cosine'){
-                    var url = '/cosine';
-                }else{
-                    var url = '/fuzzy';
-                }
+                // var dat = $("input[name='optradio']:checked").val();
+                // if(dat=='cosine'){
+                    // var url = '/cosine';
+                // }else{
+                    // var url = '/fuzzy';
+                // }
+                var url = '/cosine'; //url
                 //do ajax proses
                 $.ajax({       
                     url: url,
@@ -152,7 +153,7 @@
                             myChart.setOption(option);
                             myChart.on('click','series',function (obj) {
                                 var dt = obj.value[3];
-                                $("#judulModal").html(obj.seriesName);  
+                                $("#judulModal").html(obj.value[5]);  
                                 $("#instansiModal").html(obj.value[4]);  
                                 $("#isiModal").html(dt.join('<br><br>'));                   
                                 $('#myModal').modal('show');                                
