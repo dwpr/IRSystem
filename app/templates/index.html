@@ -120,12 +120,14 @@
                             $("#pesan").html('<div class="alert alert-danger" role="alert"><strong>please input a query</strong></div>');
                         }else{                            
                             $('#loading').loading({ message: "loading graph" });
-                            $("#pesan").html('<div class="alert alert-info text-center text-capitalize" role="alert">Graph <strong>'+data.type+'</strong> yang terbentuk</strong></div>');
+                            // $("#pesan").html('<div class="alert alert-info text-center text-capitalize" role="alert">Graph <strong>'+data.type+'</strong> yang terbentuk</strong></div>');
                             $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
                             // based on prepared DOM, initialize echarts instance
                             var myChart = echarts.init(document.getElementById('echartgraph'));
                             var dt = data.scatter;
                             var lg = data.lgd;
+                            console.log(dt[0].name);
+                            console.log(lg);
                             option = {                         
                                 xAxis: {
                                     show: false

@@ -17,7 +17,7 @@ remover = StopWordRemoverFactory().create_stop_word_remover()
 katabaku = pd.read_csv("app/data/vocab_katabaku.csv")
 data_training = pd.read_csv("app/data/finalPrerapi.csv")
 author = list(dict.fromkeys([str(x) for x in data_training["Author"]]))
-lembaga = list(dict.fromkeys([str(x)for x in data_training["Lembaga"]]))
+lembaga = list(dict.fromkeys([str(x)for x in data_training["LembagaDetail"]]))
 baku = [x for x in katabaku["kata_baku"]]
 translator = str.maketrans('', '', string.punctuation)
 
@@ -86,21 +86,23 @@ def showJSON(save):
     scat = []
     param = len(save)
     color = [hexCodeColor() for x in range(len(lembaga))]
+    new_col = [color,lembaga] #join color and lembaga detail
     for x in range(param):
         kordX = int(random.randint(0, param))  # random for plot only
         # grouping per lembaga
-        for y in range(len(lembaga)):
-            groupLem = pd.DataFrame(save[x][np.where(save[x][:,2] == str(lembaga[y]))]) # and convert to pandas
+        for y in range(len(new_col[1])):
+            # groupLem = pd.DataFrame(save[x][np.where(save[x][:,2] == str(lembaga[y]))]) # 2 for lembaga and 3 for lembaga_detail and convert to pandas
+            groupLem = pd.DataFrame(save[x][np.where(save[x][:,3] == str(new_col[1][y]))]) # auto col on row 1 (lembaga detail) cause 0 (color) 
             if(len(groupLem)!=0): #dont process empty dataframe
                 title = [i for i in groupLem[0]]
                 inst = str(list(set(groupLem[1]))[0]) #instansi column number 1
-                lemb = str(list(set(groupLem[2]))[0])
+                lemb = str(list(set(groupLem[3]))[0]) # 2 for lembaga, 3 for lembaga_detail
                 aut = str(list(set(groupLem[4]))[0]) # aturhor column number 4
                 nilai = groupLem[6].sum(axis=0)
                 size = len(groupLem[6])
                 kordY = float(round(nilai,2))
                 isi = {
-                    "color": color[y],
+                    "color": new_col[0][y], #color[y]
                     "label": lemb,
                     "author": aut,
                     "instansi":inst,
