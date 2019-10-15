@@ -11,30 +11,18 @@
         <div class="row mt-4 mb-4">
             <div class="col-md-12">
                 <div class="card">
-                    <!-- <div class="card-header"> -->
-                        <!-- <h2 class="h1 text-center text-danger text-capitalize">IR Research</h2> -->
-                    <!-- </div> -->
                     <div class="card-body">
                         <form id="myForm">
                             <div>
                                 <label class="mr-sm-2" for="inlineFormCustomSelect">Search</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control rounded-0" id="query" name="query" placeholder="Enter Query" required>
+                                    <input type="text" class="form-control rounded-0" id="query" name="query"
+                                        placeholder="Enter Query" required>
                                     <div class="input-group-prepend">
                                         <button type="submit" id="submitForm" class="btn btn-primary">Submit</button>
                                     </div>
                                 </div>
-                            </div>                            
-                            <!-- <div> -->
-                                <!-- <div class="custom-control custom-radio custom-control-inline"> -->
-                                    <!-- <input type="radio" id="customRadioInline1" value="cosine" name="optradio" class="custom-control-input" checked> -->
-                                    <!-- <label class="custom-control-label" for="customRadioInline1">Cosine Method</label> -->
-                                <!-- </div> -->
-                                <!-- <div class="custom-control custom-radio custom-control-inline"> -->
-                                    <!-- <input type="radio" id="customRadioInline2" value="fuzzy" name="optradio" class="custom-control-input" disabled> -->
-                                    <!-- <label class="custom-control-label" for="customRadioInline2">Fuzzy Token Set Ratio Method</label> -->
-                                <!-- </div> -->
-                            <!-- </div> -->
+                            </div>
                         </form>
                     </div>
                     <div id="dsd">
@@ -57,8 +45,11 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <h7 class="badge badge-success" id="instansiModal" class="modal-title text-capitalize text-white"></h7>
-                    <div class="bg-info text-white"><p class="m-2">Judul</p></div>
+                    <h7 class="badge badge-success" id="instansiModal" class="modal-title text-capitalize text-white">
+                    </h7>
+                    <div class="bg-info text-white">
+                        <p class="m-2">Judul</p>
+                    </div>
                     <div>
                         <p class="pl-2" id="isiModal"></p>
                     </div>
@@ -73,109 +64,96 @@
     {% include "script.html" %}
     </script>
     <script>
-            // $(document).ajaxSend(function () { Pace.restart(); });
-            // $(document).ajaxComplete(function () { Pace.restart(); });
-            // $(document).ajaxStart(function () { Pace.restart(); });
-            // paceOptions = {
-            //     // Disable the 'elements' source
-            //     elements: false,
-
-            //     // Only show the progress on regular and ajax-y page navigation,
-            //     // not every request
-            //     restartOnRequestAfter: false
-            // }
-            //ketika submit button d click
-            $("#submitForm").click(function () {
-                $("#submitForm").attr("disabled", true);
-                // console.log($("#myForm").serialize());
-                // var dat = $("input[name='optradio']:checked").val();
-                // if(dat=='cosine'){
-                    // var url = '/cosine';
-                // }else{
-                    // var url = '/fuzzy';
-                // }
-                var url = '/cosine'; //url
-                //do ajax proses
-                $.ajax({       
-                    url: url,
-                    type: "POST", //form method
-                    data: $("#myForm").serialize(),
-                    // contentType: 'application/json;charset=UTF-8', # if centnt type json
-                    contentType: 'application/x-www-form-urlencoded', //encode data content type
-                    dataType: "json", //misal kita ingin format datanya brupa json
-                    beforeSend: function () {
-                        //lakukan apasaja sambil menunggu proses selesai disini
-                        //misal tampilkan loading                   
-                        $('#loading').loading(
-                            {
-                                theme:'dark',
-                                message: 'Please wait, maybe this take several time to process'
-                            }
-                        );
-                    },
-                    success: function (data) { //or response
-                        if (data.error==true){
-                            $('#loading').loading('stop');
-                            console.log("please input a query");
-                            $("#pesan").html('<div class="alert alert-danger" role="alert"><strong>please input a query</strong></div>');
-                        }else{                            
-                            $('#loading').loading({ message: "loading graph" });
-                            // $("#pesan").html('<div class="alert alert-info text-center text-capitalize" role="alert">Graph <strong>'+data.type+'</strong> yang terbentuk</strong></div>');
-                            $('#tampilchart').html("<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>");
-                            // based on prepared DOM, initialize echarts instance
-                            var myChart = echarts.init(document.getElementById('echartgraph'));
-                            var dt = data.scatter;
-                            var lg = data.lgd;
-                            console.log(dt[0].name);
-                            console.log(lg);
-                            option = {                         
-                                xAxis: {
-                                    show: false
-                                },
-                                yAxis: {
-                                    show: false,
-                                },
-                                legend:{
-                                    data:lg,
-                                },
-                                tooltip:{
-                                    // position: "top"                                    
-                                    formatter: function (obj) {
-                                        // console.log(obj);
-                                        var value = obj.value;
-                                        return value[5]+'<br><b>'+value[4]+'</b><br>Jumlah judul ：' + value[2] + '<br><b>(click to detail)</b>';
-                                    }
-                                },
-                                dataZoom: [{
-                                    type: 'slider',
-                                    orient: 'vertical'
-                                }],
-                                series:dt
-                            };
-                            myChart.setOption(option);
-                            myChart.on('click','series',function (obj) {
-                                var dt = obj.value[3];
-                                $("#judulModal").html(obj.value[5]);  
-                                $("#instansiModal").html(obj.value[4]);  
-                                $("#isiModal").html(dt.join('<br><br>'));                   
-                                $('#myModal').modal('show');                                
-                            });
-                            window.onresize = function () {
-                                myChart.resize();
-                            };
-                            $('#loading').loading('stop');
-                        }                        
-                        $("#submitForm").removeAttr("disabled");
-                    },
-                    error: function (xhr, Status, err) {
+        //ketika submit button d click
+        $("#submitForm").click(function () {
+            $("#submitForm").attr("disabled", true);
+            var url = '/cosine'; //url
+            //do ajax proses
+            $.ajax({
+                url: url,
+                type: "POST", //form method
+                data: $("#myForm").serialize(),
+                // contentType: 'application/json;charset=UTF-8', # if centnt type json
+                contentType: 'application/x-www-form-urlencoded', //encode data content type
+                dataType: "json", //misal kita ingin format datanya brupa json
+                beforeSend: function () {
+                    //lakukan apasaja sambil menunggu proses selesai disini
+                    //misal tampilkan loading                   
+                    $('#loading').loading({
+                        theme: 'dark',
+                        message: 'Please wait, maybe this take several time to process'
+                    });
+                },
+                success: function (data) { //or response
+                    if (data.error == true) {
                         $('#loading').loading('stop');
-                        console.log("Something wrong :(");                        
-                        $("#submitForm").removeAttr("disabled");
-                        // console.log(err);
+                        console.log(data.message);
+                        $("#pesan").html(
+                            '<div class="alert alert-danger" role="alert"><strong>'+data.message+'</strong></div>'
+                        );
+                    } else {
+                        $('#loading').loading({
+                            message: "loading graph"
+                        });
+                        $('#tampilchart').html(
+                            "<div class='mw-100 mh-100' style='width:2000px; height:600px;' id='echartgraph'></div>"
+                        );
+                        // based on prepared DOM, initialize echarts instance
+                        var myChart = echarts.init(document.getElementById('echartgraph'));
+                        var dt = data.scatter;
+                        var lg = data.lgd;
+                        console.log(data.length());
+                        console.log(lg);
+                        option = {
+                            xAxis: {
+                                show: false
+                            },
+                            yAxis: {
+                                show: false,
+                            },
+                            legend: {
+                                data: lg,
+                            },
+                            tooltip: {
+                                // position: "top"                                    
+                                formatter: function (obj) {
+                                    // console.log(obj);
+                                    var value = obj.value;
+                                    return value[5] + '<br><b>' + value[4] +
+                                        '</b><br>Jumlah judul ：' + value[2] +
+                                        '<br><b>(click to detail)</b>';
+                                }
+                            },
+                            dataZoom: [{
+                                type: 'slider',
+                                orient: 'vertical'
+                            }],
+                            series: dt
+                        };
+                        myChart.setOption(option);
+                        myChart.on('click', 'series', function (obj) {
+                            var dt = obj.value[3];
+                            $("#judulModal").html(obj.value[5]);
+                            $("#instansiModal").html(obj.value[4]);
+                            $("#isiModal").html(dt.join('<br><br>'));
+                            $('#myModal').modal('show');
+                        });
+                        window.onresize = function () {
+                            myChart.resize();
+                        };
+                        $('#loading').loading('stop');
                     }
-                    }); 
-                    return false;
-                });
+                    $("#submitForm").removeAttr("disabled");
+                },
+                error: function (xhr, Status, err) {
+                    $('#loading').loading('stop');
+                    console.log("Something wrong :(");
+                    $("#submitForm").removeAttr("disabled");
+                    // console.log(err);
+                }
+            });
+            return false;
+        });
     </script>
 </body>
 
