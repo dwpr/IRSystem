@@ -7,7 +7,7 @@ import random
 import time
 import numpy as np
 from nltk.corpus import stopwords  # nltk stopwords list bahasa inggris
-from nltk.stem import PorterStemmer #nltk stemming
+from nltk.stem import PorterStemmer # nltk stemming
 from sklearn.feature_extraction.text import TfidfVectorizer
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory #sastrawi stemming
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory #sastrawi stopword
@@ -41,8 +41,7 @@ def preProcess(query):
     textClean = remover.remove(textStemmed)  # teks stopword remover
     # harus string dikasih koma atau tanda baca lain untuk mengatasi entering dan setiap kalimat
     convert_to_string = "".join(textClean)
-    # split string yang sudah dikonversi kedalam token
-    word = nltk.word_tokenize(convert_to_string)
+    word = nltk.word_tokenize(convert_to_string) # split string yang sudah dikonversi kedalam token
     tampung = []
     for teks_conv in word:  # check one by one word (token)
         n = 0
@@ -162,10 +161,13 @@ def cosine():
                     "normal": {"color": sc["color"]}
                 }
             } for sc in showJSON(hasilgroup)]  # cosine
-            print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
-            return jsonify({"error":False,"scatter":isi_scatterCos, "lgd":lembaga, "type":"Cosine"})
+            if(len(isi_scatterCos)!=0): #if submit query and there is a result (>0)
+                print("--- %s seconds ---" % (time.time() - start_time)) #execution time, please enable to track how long your code while execute
+                return jsonify({"error":False,"scatter":isi_scatterCos, "lgd":lembaga, "message":"Cosine"})
+            else:  #if submit query but the result is none / nothing (<=0) 
+                return jsonify({"error":True,"scatter":[],"message":"sorry there is no "+str(query)+" data in the dataset"})
         else:
-            return jsonify({"error":True,"scatter":[],"type":[]})
+            return jsonify({"error":True,"scatter":[],"message":"please input a query"})
     else:
         msg = ["maaf request anda tidak dapat kami penuhi"]
         return render_template("page_errorhandling.html", message=msg), 302
